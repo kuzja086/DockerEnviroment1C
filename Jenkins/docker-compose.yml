@@ -4,11 +4,11 @@ services:
     image: jenkins:jenkins:lts
     ports:
       - 2602:8080
-      - 3602:5000
+      - 3602:50000
     volumes:
       - jenkins_data:/var/jenkins_home
     extra_hosts:
-      - "swarm-manager:192.168.0.111"
+      - "swarm-manager:ipAdress"
     networks:
     - dockerNet
 
