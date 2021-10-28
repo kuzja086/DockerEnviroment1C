@@ -1,0 +1,7 @@
+registry:
+  restart: always
+  image: registry
+  ports:
+    - 5000:5000  
+  volumes:
+    - /path/data:/var/lib/registry /* раздел который будет использоваться как хранилище для вашего репозитория*/
