@@ -10,3 +10,14 @@
 В настройках Jenkins в Глобальных настройках в глобальных переменных ставим GIT_LFS_SKIP_SMUDGE=1 
 
 *https://github.com/sameersbn/docker-gitlab - docker-compose.yml -GITLAB
+
+Для unsecure registry
+Resolved the issue by adding a file /etc/docker/daemon.json with following content
+
+{
+    "insecure-registries" : [ "hostname.cloudapp.net:5000" ]
+}
+And then restart docker
+
+sudo systemctl daemon-reload
+sudo systemctl restart docker
