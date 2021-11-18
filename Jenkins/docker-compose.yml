@@ -1,20 +1,19 @@
 version: '3.7'
 services:
   jenkins:
-    image: jenkins:jenkins:lts
+    restart: always
+    image: jenkins/jenkins:lts
     ports:
-      - 2602:8080
-      - 3602:50000
+      - 2603:8080
+      - 3603:50000
+    environment:
+      - TZ=Asia/Yekaterinburg
     volumes:
       - jenkins_data:/var/jenkins_home
     extra_hosts:
-      - "swarm-manager:ipAdress"
+      - "swarm-manager:192.168.0.111"
     networks:
     - dockerNet
 
 volumes:
   jenkins_data:
-
-networks:
-  dockerNet:
-    external: true
