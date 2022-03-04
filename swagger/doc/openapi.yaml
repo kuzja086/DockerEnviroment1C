@@ -1,0 +1,209 @@
+openapi: 3.0.1
+info:
+  title: Перина Перони
+  description: Интеграция сайта perina-peroni и 1С:Розница
+  termsOfService: ''
+  version: 2.1.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://0.peroni.ru/perinaretail/hs/pp
+  # - url: http://0.peroni.ru/perinaretail/hs/pp/
+tags:
+  - name: GetRestOfBonus
+    description: 'Остаток бонусов'
+  - name: exchangeOrders
+    description: 'Обмен заказами'
+  - name:  editOrderStatus
+    description: "Изменение статуса заказов"
+paths:
+  /GetRestOfBonus/{number}:
+    get:
+      tags:
+        - GetRestOfBonus
+      summary: Получить остаток бонусов покупателя
+      description: Возвращает остаток бонусов у клиента
+      parameters:
+        - name: number
+          in: path
+          description: Номер телефона клиента
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Массив Остатков
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rests'
+  /exchangeOrders/:
+    post:
+      tags:
+        - exchangeOrders
+      summary: Передача заказов с сайта
+      description: Загружает информацию по заказам с сайта
+      requestBody:
+        description: Информация о заказах
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                  $ref: '#/components/schemas/Orders'
+        required: true
+      responses:
+        '200':
+          description: Заказ успешно создан
+          content: {}
+      x-codegen-request-body-name: body
+  /editOrderStatus/:
+    post:
+      tags:
+        - editOrderStatus
+      summary: Измененить статусы заказов
+      description: Изменение статусов заказа
+      requestBody:
+        description: Информация о заказах
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/editOrderStatus'
+        required: true
+      responses:
+        '200':
+          description: Информация об обработанных заказах
+          content: 
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/editOrderStatusResposnse'
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    Rests:
+      type: object
+      properties:
+        Период:
+          type: string
+          description: Дата сгорания
+        Сумма:
+          type: number
+          description: Сумма остатка
+        Изменение:
+          type: number
+          description: Сколько сгорит
+        ТекущийОстаток:
+          type: boolean
+          description: Признак текущего остатка
+    address:
+      type: object
+      properties:
+        city:
+          type: string
+          description: Город доставки
+        region:
+          type: string
+          description: Регион доставки
+    customer:
+      type: object
+      properties:
+        city:
+          type: string
+          description: Город доставки
+        region:
+          type: string
+          description: Регион доставки
+    product:
+      type: object
+      properties:
+        uid:
+          type: string
+          description: Гуид товара
+        quantity:
+          type: number
+          description: Количество товара
+        price:
+          type: number
+          description: Цена товара
+        sum:
+          type: number
+          description: Сумма товара
+    GiftCards:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Номер сертификата
+        nominal:
+          type: number
+          description: Номинал сертификата
+    Orders:
+      type: object
+      properties:
+        number:
+          type: number
+          description: Номер заказа в ИМ
+        createdAt:
+          type: string
+          description: Дата создания заказа
+          format: date
+        sumToPay:
+          type: number
+          description: Сумма заказа
+        status:
+          type: string
+          description: Статус заказа
+        customer:
+          $ref: '#/components/schemas/customer'
+        address:
+          $ref: '#/components/schemas/address'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/product'
+        promoCode:
+          type: string
+          description: Примененные промокоды
+        giftCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/GiftCards'
+        isBonusUsed:
+          type: boolean
+          description: Были использованы бонусы
+    editOrderStatus:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Номер заказа
+          example: 30512
+        status:
+          type: string
+          description: Новый статус заказа
+          enum:
+            - Доставка
+            - Оплачен
+          example: Оплачен
+    editOrderStatusResposnse:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Номер заказа
+          example: 30512
+        result:
+          type: boolean
+          description: Результат изменения статуса
+          example: true
+        description:
+          type: string
+          description: Описание ошибки, когда статус изменить не удалось
+          example: ""
