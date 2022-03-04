@@ -22,4 +22,4 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 
 # Полезные команды
-docker run -it <ContainerID> /bin/bash - Заходим в контейнер в баш
+docker exec -it <ContainerName> /bin/sh - Заходим в контейнер в баш
