@@ -23,3 +23,9 @@ sudo systemctl restart docker
 
 # Полезные команды
 docker exec -it <ContainerName> /bin/sh - Заходим в контейнер в баш
+
+# Установка docker на Raspberry
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo bash get-docker.sh
+sudo apt install python3-pip -y
+sudo pip3 install docker-compose
