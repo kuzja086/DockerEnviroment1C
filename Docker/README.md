@@ -23,3 +23,6 @@ sudo systemctl restart docker
 
 # Полезные команды
 docker exec -it <ContainerName> /bin/sh - Заходим в контейнер в баш
+
+docker cp host_source_path container:destination_path - Копируем файл с хоста в контейнер
+docker cp container:source_path host_destination_path - Копируем файл из контейнра на хост
