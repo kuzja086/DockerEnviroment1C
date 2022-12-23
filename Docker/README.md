@@ -26,3 +26,10 @@ docker exec -it <ContainerName> /bin/sh - Заходим в контейнер �
 
 docker cp host_source_path container:destination_path - Копируем файл с хоста в контейнер
 docker cp container:source_path host_destination_path - Копируем файл из контейнра на хост
+
+# Установка docker на Raspberry
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo bash get-docker.sh
+sudo apt install python3-pip -y
+sudo pip3 install docker-compose
+
