@@ -1,0 +1,18 @@
+CREATE TABLE log_storage_AIS.qerr(`DateTime` DateTime64(6,'Asia/Yekaterinburg'),
+                                  `duration` Int32,
+                                  `Level` Int32,
+                                  `Process` String,
+                                  `ProcessID` Int32,
+                                  `ProcessName` String,
+                                  `OSThread` Int32,
+                                  `ClientID` Int32,
+                                  `ApplicationName` String,
+                                  `ComputerName` String,
+                                  `ConnectID` Int32,
+                                  `SessionID` Int32,
+                                  `User` String,
+                                  `Query` String,
+                                  `Description` String,
+                                  `message` String,
+                                  `file` String) ENGINE = MergeTree() PARTITION BY toYYYYMM(DateTime)
+ORDER BY (DateTime);

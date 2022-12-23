@@ -1,0 +1,96 @@
+# Шаблон для добавления новых баз к выгрузке
+#  т.к. это yml, то он чувствителен к пробелам, табуляции и переносу строк. Если что-то не заработало это нужно проверить.
+#
+#  ИмяСервиса - Называем по шаблону Vector_ИмяБазы
+#  vector_ИмяБазы:
+     # Докер образ Вектора который используем
+#    image: timberio/vector:latest-debian
+     # Имя контейнера, называем как сервис vector_ИмяБазы:
+#    container_name:vector_ИмяБазы
+     # Переменные среды
+#    environment:
+       # Путь к каталогу с журналом регистрации
+#      - onec_logs_path=/etc/vector/log1c
+       # Адрес ClickHouse
+#      - onec_logs_server=http://10.172.2.121:8123
+       # Имя базы данных в ClickHouse. База Создается отдельным скриптом Обычно называем log_storage_ИмяБазы
+#      - onec_logs_database=log_storage_test
+       # Пользователь ClickHouse
+#      - onec_logs_user=default
+       # Пароль Пользователя ClickHouse
+#      - onec_logs_password=8CGjzWo
+       # Имя таблицы в которую выгружаются даныне журнала регистрации
+#      - onec_logs_table_logs=onec_log
+       # Имя таблицы в которую выгружаются Ошибки разбора журнала регистрации
+#      - onec_logs_table_errors=onec_log_error
+       # Адрес по которому доступен API Vector'а для проверки жизни Вектора.
+#      - onec_logs_api_ip_port=0.0.0.0:8686
+       # Адрес Prometheus куда нужно отправлять метрики.
+#      - onec_logs_metric_ip_port=0.0.0.0:8687
+       # Флаг отладки
+#      - onec_logs_debug=false
+#    volumes:
+       # Путь к каталогу с журналом регистрации, который подставляется в переменную onec_logs_path
+       # Сейчас примонтирован каталог \\TMN-PPAIS1C01\reg_1541  к папке /home/docker/vector/reg
+       # Смотрим гуид базы в файле 1CV8Clst.lst и в каталоге с нужным гуидом, каталог 1Cv8Log  пробрасываем в контейнер
+#      - ./reg/<ГУИДЛогаБазы>/1Cv8Log:/etc/vector/log1c
+       # Файл конфигурации Vector
+#      - ./vector.toml:/etc/vector/vector.toml:ro
+       # Файл с логикой разбора журнала регистрации
+#      - ./transform.lua:/etc/vector/transform.lua:ro
+       # В первоисточнике была регулярка для разбора строки ЖР, но почему-то не пробрасывалась в докере. Перенес в файл конфигурации *.toml
+#      - ./transform.vrl:/etc/vector/transform.vrl
+     # Перезапуск контейнера
+#    restart: always
+     # Порты которые пробрасываем из контейнера для API
+#    ports:
+#      - "8686:8686"
+#      - "8687:8687"
+
+# КонецШаблона
+
+version: '3.7'
+
+services:
+  vector_AIS:
+     # Докер образ Вектора который используем
+    image: timberio/vector:latest-debian
+     # Имя контейнера, называем как сервис vector_ИмяБазы:
+    container_name: vector_AIS
+     # Переменные среды
+    environment:
+       # Путь к каталогу с журналом регистрации
+      - onec_logs_path=/etc/vector/log1c
+       # Адрес ClickHouse
+      - onec_logs_server=http://10.172.2.121:8123
+       # Имя базы данных в ClickHouse. База Создается отдельным скриптом Обычно называем log_storage_ИмяБазы
+      - onec_logs_database=log_storage_AIS
+       # Пользователь ClickHouse
+      - onec_logs_user=default
+       # Пароль Пользователя ClickHouse
+      - onec_logs_password=8CGjzWo
+       # Имя таблицы в которую выгружаются даныне журнала регистрации
+      - onec_logs_table_logs=onec_log
+       # Имя таблицы в которую выгружаются Ошибки разбора журнала регистрации
+      - onec_logs_table_errors=onec_log_error
+       # Адрес по которому доступен API Vector'а для проверки жизни Вектора. На текущий момент отключен
+      - onec_logs_api_ip_port=0.0.0.0:8686
+       # Адрес Prometheus куда нужно отправлять метрики. На текущий момент отключен
+      - onec_logs_metric_ip_port=0.0.0.0:8687
+       # Флаг отладки
+      - onec_logs_debug=false
+    volumes:
+       # Путь к каталогу с журналом регистрации, который подставляется в переменную onec_logs_path
+       # Сейчас примонтирован каталог \\TMN-PPAIS1C01\reg_1541  к папке /home/docker/vector/reg
+       # Смотрим гуид базы в файле 1CV8Clst.lst и в каталоге с нужным гуидом, каталог 1Cv8Log  пробрасываем в контейнер
+      - ./reg/9503b2e6-1dcc-4720-8240-a37810c80d90/1Cv8Log:/etc/vector/log1c
+       # Файл конфигурации Vector
+      - ./vector.toml:/etc/vector/vector.toml:ro
+       # Файл с логикой разбора журнала регистрации
+      - ./transform.lua:/etc/vector/transform.lua:ro
+#      - ./transform.vrl:/etc/vector/transform.vrl
+    # Перезапуск контейнера
+    restart: always
+    ports:
+      - "8686:8686"
+      - "8687:8687"

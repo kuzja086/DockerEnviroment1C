@@ -1,0 +1,315 @@
+# Чтение из файлов.
+[sources.input_logs]
+  type = "file"
+  include = ['''/var/log/logtj/**/*.log''']
+  data_dir =  '''/var/lib/vector'''
+  fingerprint.strategy = "device_and_inode"
+  multiline.timeout_ms = 1000
+  multiline.mode = "halt_before"
+  multiline.start_pattern = ''
+  multiline.condition_pattern = '[0-5]{1}\d:[0-5]{1}\d.\d{6}'
+
+# Базовая трансформация, выделение вида события, длительности и тд. 
+[transforms.remap_logs]
+inputs = ["input_logs"]
+type = "remap"
+file = "/etc/vector/transforms/parseLog.vrl"
+
+# Если мы получили событие Context Добавим его к основному событию.
+[transforms.add_context_event]
+inputs = ["remap_logs"]
+type = "reduce"
+starts_when = { type = "vrl", source = '''.Event != "Context"''' }
+
+  [transforms.add_context_event.merge_strategies]
+  DateTime = "discard"
+  duration = "discard" 
+  Event = "discard"
+  Level = "discard"
+  ProcessID = "discard"
+  Content = "concat_newline"
+  message = "concat_newline"
+  file = "discard"
+
+
+# Отфильтруем только требуемые события
+[transforms.filter_EVENT_LIST] 
+  inputs = ["add_context_event"]
+  type = "filter"
+  condition = '''contains("${EVENT_LIST}", to_string!(.Event))'''
+
+#################################### СЕКЦИЯ СОБЫТИЙ ##########################################################
+# Каждое событие ТЖ обрабатывается отдельно                                                                  #
+# Для обработки необходимо создать фильтр по событию и ремап со ссылкой на vrl файл c описанием транформации #
+##############################################################################################################
+
+# Событие EXCP
+[transforms.filter_EXCP] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "EXCP"'
+
+[transforms.EXCP]
+inputs = ["filter_EXCP"]
+type = "remap"
+file = "/etc/vector/transforms/EXCP.vrl"
+
+# Событие EXCPCNTX
+[transforms.filter_EXCPCNTX] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "EXCPCNTX"'
+
+[transforms.EXCPCNTX]
+inputs = ["filter_EXCPCNTX"]
+type = "remap"
+file = "/etc/vector/transforms/EXCPCNTX.vrl"
+
+# Событие DBMSSQL
+[transforms.filter_DBMSSQL] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "DBMSSQL"'
+
+[transforms.DBMSSQL]
+inputs = ["filter_DBMSSQL"]
+type = "remap"
+file = "/etc/vector/transforms/DBMSSQL.vrl"
+
+# Событие SDBL
+[transforms.filter_SDBL] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "SDBL"'
+
+[transforms.SDBL]
+inputs = ["filter_SDBL"]
+type = "remap"
+file = "/etc/vector/transforms/SDBL.vrl"
+
+# Событие TLOCK
+[transforms.filter_TLOCK] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "TLOCK"'
+
+[transforms.TLOCK]
+inputs = ["filter_TLOCK"]
+type = "remap"
+file = "/etc/vector/transforms/TLOCK.vrl"
+
+# Событие TTIMEOUT
+[transforms.filter_TTIMEOUT] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "TTIMEOUT"'
+
+[transforms.TTIMEOUT]
+inputs = ["filter_TTIMEOUT"]
+type = "remap"
+file = "/etc/vector/transforms/TTIMEOUT.vrl"
+
+# Событие TDEADLOCK
+[transforms.filter_TDEADLOCK] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "TDEADLOCK"'
+
+[transforms.TDEADLOCK]
+inputs = ["filter_TDEADLOCK"]
+type = "remap"
+file = "/etc/vector/transforms/TDEADLOCK.vrl"
+
+# Событие QERR
+[transforms.filter_QERR] 
+  inputs = ["filter_EVENT_LIST"]
+  type = "filter"
+  condition = '.Event == "QERR"'
+
+[transforms.QERR]
+inputs = ["filter_QERR"]
+type = "remap"
+file = "/etc/vector/transforms/QERR.vrl"
+
+######################## СЕКЦИЯ ВЫВОДА ДАННЫХ ###################################
+# В данной секции описываются все используемые методы вывода обработанных логов #
+#################################################################################
+
+#####################################
+#  Вывод результата в БД clickhouse #
+#####################################
+
+# Событие EXCP 
+[sinks.cl_excp]
+ type = "clickhouse"
+ inputs = ["EXCP"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''excp'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+ # Событие EXCPCNTX 
+[sinks.cl_EXCPCNTX]
+ type = "clickhouse"
+ inputs = ["EXCPCNTX"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''excpcntx'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+ # Событие DBMSSQL 
+[sinks.cl_DBMSSQL]
+ type = "clickhouse"
+ inputs = ["DBMSSQL"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''dbmssql'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+# Событие SDBL 
+[sinks.cl_SDBL]
+ type = "clickhouse"
+ inputs = ["SDBL"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''sdbl'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+# Событие TLOCK 
+[sinks.cl_TLOCK]
+ type = "clickhouse"
+ inputs = ["TLOCK"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''tlock'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+ # Событие TTIMEOUT 
+[sinks.cl_TTIMEOUT]
+ type = "clickhouse"
+ inputs = ["TTIMEOUT"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''ttimeout'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+ # Событие TDEADLOCK 
+[sinks.cl_TDEADLOCK]
+ type = "clickhouse"
+ inputs = ["TDEADLOCK"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''tdeadlock'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+# Событие QERR 
+[sinks.cl_QERR]
+ type = "clickhouse"
+ inputs = ["QERR"]
+ endpoint = '''${CH_SERVER}'''
+ auth.strategy = "basic"
+ auth.user = '''${CH_USER}'''
+ auth.password = '''${CH_PASSWORD}'''
+ database = '''${CH_DATABASE}'''
+ table = '''qerr'''
+ skip_unknown_fields = true
+ batch.max_events = 10000
+ batch.timeout_secs = 5
+ acknowledgements.enabled = true
+
+
+##################################################
+# Пример вывода результата в файл, в формате JSON#
+##################################################
+
+# [sinks.EXCP_json_out]
+# type = "file"
+# inputs = [ "EXCP" ]
+# compression = "none"
+# path = "/tmp/EXCP/%Y-%m-%d %H:%M.json"
+
+  
+#   [sinks.EXCP_json_out.encoding]
+#   codec = "json"
+
+# [sinks.EXCPCNTX_json_out]
+# type = "file"
+# inputs = [ "EXCPCNTX" ]
+# compression = "none"
+# path = "/tmp/EXCPCNTX/%Y-%m-%d %H:%M.json"
+
+  
+#   [sinks.EXCPCNTX_json_out.encoding]
+#   codec = "json"
+
+#   [sinks.DBMSSQL_json_out]
+# type = "file"
+# inputs = [ "DBMSSQL" ]
+# compression = "none"
+# path = "/tmp/DBMSSQL/%Y-%m-%d %H:%M.json"
+
+  
+#   [sinks.DBMSSQL_json_out.encoding]
+#   codec = "json"
+
+# [sinks.SDBL_json_out]
+# type = "file"
+# inputs = [ "SDBL" ]
+# compression = "none"
+# path = "/tmp/SDBL/%Y-%m-%d %H:%M.json"
+
+  
+#   [sinks.SDBL_json_out.encoding]
+#   codec = "json"
+
+# [sinks.QERR_json_out]
+# type = "file"
+# inputs = [ "QERR" ]
+# compression = "none"
+# path = "/tmp/QERR/%Y-%m-%d %H:%M.json"
+
+  
+#   [sinks.QERR_json_out.encoding]
+#   codec = "json"

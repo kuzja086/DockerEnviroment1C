@@ -1,0 +1,96 @@
+version: '3.0'
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portiner
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  ClickHouse-Server:
+    image: yandex/clickhouse-server
+    container_name: clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9001:9000"
+    volumes:
+      - Clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/users.xml:/etc/clickhouse-server/users.xml:rw
+
+  click-ui:
+    image: spoonest/clickhouse-tabix-web-client
+    depends_on:
+        - ClickHouse-Server
+    ports:
+      - "8180:80"
+
+  Prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+    expose:
+      - 9090
+    ports:
+      - "9090:9090"
+
+  alertmanager:
+    image: prom/alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./prometheus/alertmanager/:/etc/alertmanager/
+      - alertmanager_data:/etc/alertmanager/data
+container_name: alertmanager
+    hostname: alertmanager
+    environment:
+      TZ: "Asia/Yekaterinburg"
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+#      - '--storage.path=/etc/alertmanager/data'
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-enterprise:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  blackbox-exporter:
+    container_name: blackbox
+    image: prom/blackbox-exporter
+    networks:
+      - default
+    restart: unless-stopped
+    ports:
+      - "9115:9115"
+    command:
+      - "--config.file=/etc/blackbox/blackbox.yml"
+    volumes:
+      - ./blackbox:/etc/blackbox
+    environment:
+      TZ: "Asia/Yekaterinburg"
+
+volumes:
+    portainer_data: {}
+    Clickhouse_data: {}
+    prometheus_data: {}
+    grafana_data: {}
+    alertmanager_data: {}
+
